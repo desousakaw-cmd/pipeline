@@ -1,0 +1,16 @@
+# Segredos e variáveis locais
+.env
+.env.*
+
+!.env.example
+
+# Java e Maven
+target/
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Arquivos auxiliares do Windows
+*:Zone.Identifier

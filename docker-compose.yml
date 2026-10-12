@@ -1,0 +1,82 @@
+name: cidades-esg-inteligentes
+
+services:
+  db-staging:
+    image: mysql:8.4
+    profiles: ["staging"]
+    environment:
+      MYSQL_DATABASE: cidades_esg_staging
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Defina MYSQL_ROOT_PASSWORD no arquivo .env}
+    volumes:
+      - mysql_staging_data:/var/lib/mysql
+    networks: [esg-staging]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 25s
+    restart: unless-stopped
+
+  app-staging:
+    build: .
+    image: cidades-esg-inteligentes:${IMAGE_TAG:-local}
+    profiles: ["staging"]
+    environment:
+      SPRING_PROFILES_ACTIVE: staging
+      DB_URL: jdbc:mysql://db-staging:3306/cidades_esg_staging?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Defina MYSQL_ROOT_PASSWORD no arquivo .env}
+      SERVER_PORT: 8080
+    ports:
+      - "8081:8080"
+    depends_on:
+      db-staging:
+        condition: service_healthy
+    networks: [esg-staging]
+    restart: unless-stopped
+
+  db-prod:
+    image: mysql:8.4
+    profiles: ["production"]
+    environment:
+      MYSQL_DATABASE: cidades_esg_prod
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Defina MYSQL_ROOT_PASSWORD no arquivo .env}
+    volumes:
+      - mysql_prod_data:/var/lib/mysql
+    networks: [esg-production]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 25s
+    restart: unless-stopped
+
+  app-prod:
+    build: .
+    image: cidades-esg-inteligentes:${IMAGE_TAG:-local}
+    profiles: ["production"]
+    environment:
+      SPRING_PROFILES_ACTIVE: production
+      DB_URL: jdbc:mysql://db-prod:3306/cidades_esg_prod?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Defina MYSQL_ROOT_PASSWORD no arquivo .env}
+      SERVER_PORT: 8080
+    ports:
+      - "8082:8080"
+    depends_on:
+      db-prod:
+        condition: service_healthy
+    networks: [esg-production]
+    restart: unless-stopped
+
+networks:
+  esg-staging:
+    driver: bridge
+  esg-production:
+    driver: bridge
+
+volumes:
+  mysql_staging_data:
+  mysql_prod_data:
