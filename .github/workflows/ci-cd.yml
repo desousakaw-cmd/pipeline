@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Baixar código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Configurar Java 21
         uses: actions/setup-java@v4
         with:
@@ -36,7 +36,7 @@ jobs:
     environment: staging
     steps:
       - name: Baixar código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Configurar ambiente e implantar staging
         shell: bash
         env:
@@ -65,7 +65,7 @@ jobs:
     environment: production
     steps:
       - name: Baixar código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Configurar ambiente e implantar produção
         shell: bash
         env:
