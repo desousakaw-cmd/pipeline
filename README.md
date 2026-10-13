@@ -1,42 +1,59 @@
 # Cidades ESG Inteligentes
 
-API REST para cadastrar e consultar indicadores ambientais, sociais e de governança (ESG) de cidades. Projeto acadêmico demonstrativo com Java 21, Spring Boot, MySQL, Docker Compose e GitHub Actions.
+API REST para cadastro e consulta de indicadores ambientais, sociais e de governança (ESG) de cidades. Projeto acadêmico desenvolvido com Java 21, Spring Boot, MySQL, Docker Compose e GitHub Actions, com foco em automação de build, testes e implantação.
 
-> **Estado das evidências:** os arquivos e scripts estão preparados, mas os comandos de build, testes, execução dos containers e deploy precisam ser executados no ambiente do aluno. Não inclua prints como se já tivessem sido executados. Registre as evidências reais após seguir este guia.
+## 1. Objetivo do projeto
 
-## Funcionalidades
+O projeto tem como objetivo demonstrar uma solução de software para organizar indicadores ESG de municípios, permitindo registrar informações, consultar cidades cadastradas e acompanhar indicadores relacionados à sustentabilidade, ao desenvolvimento social e à governança.
 
-- CRUD de cidades.
-- Indicadores de ambiente, social e governança de 0 a 100.
-- Percentual de energia renovável de 0 a 100.
-- Filtro por estado.
-- Endpoint de saúde para verificação após deploy.
-- Bancos separados para staging e produção no Docker Compose.
+A aplicação utiliza uma API REST para disponibilizar as operações de gerenciamento de cidades e integra tecnologias de desenvolvimento backend, banco de dados, containerização e integração contínua.
 
-## Tecnologias utilizadas
+## 2. Funcionalidades
 
-- Java 21
-- Spring Boot 3.5.6
-- Spring Web, Spring Data JPA, Bean Validation e Actuator
-- Maven
-- MySQL 8.4
-- Docker e Docker Compose
-- GitHub Actions
-- JUnit 5
+* Cadastro de cidades.
+* Consulta de todas as cidades cadastradas.
+* Consulta individual por identificador.
+* Atualização e exclusão de registros.
+* Filtro de cidades por estado.
+* Registro de indicadores ambientais, sociais e de governança.
+* Registro do percentual de energia renovável.
+* Endpoint de saúde para verificar a disponibilidade da aplicação.
+* Execução da aplicação e do banco de dados por meio do Docker Compose.
+* Pipeline de integração e entrega contínuas com GitHub Actions.
 
-## Estrutura
+## 3. Tecnologias utilizadas
+
+| Tecnologia           | Finalidade                                       |
+| -------------------- | ------------------------------------------------ |
+| Java 21              | Linguagem de programação                         |
+| Spring Boot          | Desenvolvimento da API REST                      |
+| Spring Web           | Criação dos endpoints HTTP                       |
+| Spring Data JPA      | Persistência e acesso aos dados                  |
+| Bean Validation      | Validação dos dados de entrada                   |
+| Spring Boot Actuator | Recursos de monitoramento, conforme configurados |
+| Maven                | Gerenciamento de dependências e build            |
+| MySQL 8.4            | Banco de dados relacional                        |
+| Docker               | Containerização da aplicação                     |
+| Docker Compose       | Orquestração dos serviços                        |
+| GitHub Actions       | Automação do pipeline CI/CD                      |
+| JUnit 5              | Testes automatizados                             |
+
+## 4. Estrutura do projeto
 
 ```text
 cidades-esg-inteligentes/
-├── .github/workflows/ci-cd.yml
+├── .github/
+│   └── workflows/
+│       └── ci-cd.yml
 ├── src/
-│   ├── main/java/br/com/cidadesesg/
-│   │   ├── controller/
-│   │   ├── model/
-│   │   ├── repository/
-│   │   └── service/
-│   ├── main/resources/
-│   └── test/java/
+│   ├── main/
+│   │   ├── java/br/com/cidadesesg/
+│   │   │   ├── controller/
+│   │   │   ├── model/
+│   │   │   ├── repository/
+│   │   │   └── service/
+│   │   └── resources/
+│   └── test/
 ├── .env.example
 ├── .dockerignore
 ├── Dockerfile
@@ -45,93 +62,70 @@ cidades-esg-inteligentes/
 └── README.md
 ```
 
-## Como executar localmente com Docker
+A estrutura separa as responsabilidades da aplicação em camadas de controle, modelo, acesso aos dados e serviços. O diretório de testes contém os testes automatizados do projeto.
+
+## 5. Configuração e execução local
 
 ### Pré-requisitos
 
-- Docker Desktop instalado e em execução.
-- Git (opcional, para clonar o repositório).
+* Java 21, caso a execução seja realizada diretamente na máquina.
+* Maven, caso não seja utilizado o Maven Wrapper.
+* Docker com suporte ao Docker Compose.
+* Git, para clonar o repositório.
 
-### 1. Configurar variáveis
-
-Windows PowerShell:
-
-```powershell
-Copy-Item .env.example .env
-notepad .env
-```
-
-Altere `MYSQL_ROOT_PASSWORD` para uma senha forte. Não publique o arquivo `.env` no Git.
-
-### 2. Subir staging
+### 5.1. Compilar e executar os testes
 
 Na raiz do projeto:
+
+```bash
+mvn clean verify
+```
+
+Esse comando solicita ao Maven a limpeza dos artefatos anteriores, a compilação da aplicação e a execução das verificações e dos testes configurados no projeto.
+
+### 5.2. Iniciar o ambiente de staging
 
 ```bash
 docker compose --profile staging up -d --build
 ```
 
-A API ficará disponível em `http://localhost:8081`. Verifique:
+Verifique os containers:
+
+```bash
+docker compose --profile staging ps
+```
+
+Se a configuração do Compose publicar a porta 8081, a API poderá ser acessada em:
+
+`http://localhost:8081`
+
+Para verificar o endpoint de saúde:
 
 ```bash
 curl http://localhost:8081/api/health
 ```
 
-### 3. Subir produção local
+A resposta esperada depende do formato implementado no endpoint.
 
-```bash
-docker compose --profile production up -d --build
-```
+## 6. API REST
 
-A API ficará disponível em `http://localhost:8082`. Verifique:
+A API disponibiliza operações de gerenciamento de cidades. Considerando a configuração local de staging na porta 8081, a URL-base é:
 
-```bash
-curl http://localhost:8082/api/health
-```
+`http://localhost:8081`
 
-Os ambientes têm containers MySQL, redes e volumes separados. Para subir ambos:
+| Método HTTP | Endpoint                 | Descrição                              |
+| ----------- | ------------------------ | -------------------------------------- |
+| GET         | `/api/health`            | Verifica a saúde da aplicação          |
+| GET         | `/api/cidades`           | Lista as cidades cadastradas           |
+| GET         | `/api/cidades?estado=SP` | Filtra cidades pelo estado             |
+| GET         | `/api/cidades/{id}`      | Consulta uma cidade pelo identificador |
+| POST        | `/api/cidades`           | Cadastra uma cidade                    |
+| PUT         | `/api/cidades/{id}`      | Atualiza os dados de uma cidade        |
+| DELETE      | `/api/cidades/{id}`      | Exclui uma cidade                      |
 
-```bash
-docker compose --profile staging --profile production up -d --build
-```
+### 6.1. Exemplo de cadastro
 
-Para ver serviços e logs:
-
-```bash
-docker compose ps
-docker compose --profile staging logs -f app-staging
-docker compose --profile production logs -f app-prod
-```
-
-Para parar sem apagar os dados:
-
-```bash
-docker compose --profile staging --profile production down
-```
-
-Para remover também os dados persistidos, somente se tiver certeza:
-
-```bash
-docker compose --profile staging --profile production down -v
-```
-
-## API REST
-
-Base URL de staging: `http://localhost:8081`
-
-Base URL de produção local: `http://localhost:8082`
-
-| Método | Endpoint | Descrição |
-|---|---|---|
-| GET | `/api/health` | Retorna status e horário da aplicação |
-| GET | `/api/cidades` | Lista todas as cidades |
-| GET | `/api/cidades?estado=SP` | Filtra cidades pelo estado |
-| GET | `/api/cidades/{id}` | Consulta uma cidade |
-| POST | `/api/cidades` | Cadastra uma cidade |
-| PUT | `/api/cidades/{id}` | Atualiza uma cidade |
-| DELETE | `/api/cidades/{id}` | Exclui uma cidade |
-
-### Exemplo de criação
+A requisição abaixo ilustra o formato esperado para cadastrar uma cidade, conforme os campos descritos no projeto:
 
 ```bash
 curl -X POST http://localhost:8081/api/cidades \
@@ -146,84 +140,92 @@ curl -X POST http://localhost:8081/api/cidades \
   }'
 ```
 
-Os indicadores e o percentual de energia renovável aceitam números inteiros entre 0 e 100. Nome e estado são obrigatórios.
+Os índices e o percentual de energia renovável são representados por valores entre 0 e 100, de acordo com as regras de validação previstas para o projeto. Os campos obrigatórios e os nomes definitivos devem corresponder à implementação da API.
 
-## Pipeline CI/CD
+### 6.2. Exemplo de consulta
 
-Workflow: `.github/workflows/ci-cd.yml`.
+## 7. Pipeline CI/CD com GitHub Actions
 
-1. **Build e testes:** em cada push ou pull request para `main`, GitHub Actions prepara Java 21, executa `mvn clean verify` e constrói uma imagem Docker.
-2. **Deploy em staging:** após o sucesso da validação, o runner local inicia o perfil `staging` e verifica `/api/health` na porta 8081.
-3. **Deploy em produção:** somente depois do staging responder com sucesso, o workflow inicia o perfil `production` e verifica `/api/health` na porta 8082.
-4. **Falha:** se o endpoint de saúde não responder dentro do tempo limite, a etapa falha e os logs são impressos no job.
+O projeto utiliza GitHub Actions para automatizar etapas do processo de integração e entrega contínuas.
 
-### Configurar o deploy local via GitHub Actions
+O workflow está localizado em:
 
-Como os containers serão executados no computador local, os jobs de deploy precisam de um **self-hosted runner** nesse computador. Os jobs de build e teste continuam usando um runner hospedado pelo GitHub.
+`.github/workflows/ci-cd.yml`
 
-1. Publique o projeto em um repositório GitHub e use a branch `main`.
-2. Instale e mantenha o Docker Desktop em execução no computador que hospedará os containers.
-3. No repositório, abra **Settings → Secrets and variables → Actions → New repository secret** e crie `MYSQL_ROOT_PASSWORD`.
-4. Em **Settings → Actions → Runners**, adicione um runner próprio. Configure as labels adicionais como `cidades-esg` e mantenha o serviço/processo do runner ativo.
-5. O runner precisa ter Docker CLI, Docker Compose, `curl` e shell Bash disponíveis, além de permissão para controlar o Docker.
-6. Faça push para `main` ou execute manualmente em **Actions → CI-CD Cidades ESG Inteligentes → Run workflow**.
-7. Opcionalmente, configure proteção/aprovação para o environment `production` em **Settings → Environments**.
+### 8.1. Build e testes
 
-> O computador precisa estar ligado, conectado à internet e com o runner ativo para os deploys automáticos locais. Não exponha o Docker daemon à internet.
-
-## Containerização
-
-O `Dockerfile` usa build em múltiplas etapas: Maven/Java 21 compila o JAR; uma imagem Java 21 JRE executa somente o artefato. O processo é executado por usuário sem privilégios de root e a porta 8080 é exposta internamente.
-
-O Compose cria quatro serviços por perfil: aplicação e banco para staging, aplicação e banco para produção. Staging usa a porta 8081 e produção a 8082. Cada banco possui volume persistente e cada ambiente tem sua própria rede bridge.
-
-Comandos úteis:
+A etapa de build utiliza um runner hospedado pelo GitHub para obter o código, configurar o Java 21 e executar as verificações do Maven:
 
 ```bash
-docker build -t cidades-esg-inteligentes:local .
-docker compose --profile staging up -d --build
-docker compose --profile production up -d --build
-docker compose ps
-docker compose logs -f
+mvn -B clean verify
 ```
 
-## Prints do funcionamento e evidências
+Essa etapa permite identificar erros de compilação e falhas nos testes antes de prosseguir para o deploy.
 
-Insira capturas reais nestes espaços após executar a atividade:
+### 8.2. Deploy local com self-hosted runner
 
-1. **Build e testes:** GitHub → Actions → execução do workflow com `build-test` concluído.
-2. **Deploy staging:** job `deploy-staging` concluído e resposta de `http://localhost:8081/api/health`.
-3. **Deploy produção:** job `deploy-production` concluído e resposta de `http://localhost:8082/api/health`.
-4. **Docker:** saída de `docker compose ps` mostrando aplicações e bancos em execução.
-5. **CRUD:** resposta real de uma requisição POST e GET de `/api/cidades`.
+Para executar containers no computador local, foi configurado um runner self-hosted vinculado ao repositório. Esse runner permite que o GitHub Actions envie tarefas de implantação para uma máquina administrada pelo responsável pelo projeto.
 
-Não inclua tokens, senhas ou outros segredos nas capturas.
+O deploy de staging utiliza o Docker Compose para construir e iniciar os serviços:
 
-## Desafios encontrados e como documentar
+```bash
+docker compose --profile staging up -d --build
+docker compose --profile staging ps
+```
 
-Como a implementação ainda precisa ser executada no ambiente final, registre os desafios reais encontrados durante a configuração, por exemplo:
+A execução depende de o computador estar ligado, conectado à internet, com o runner ativo e com permissões para controlar o Docker.
 
-- Configuração do Docker Desktop e dos volumes persistentes.
-- Configuração do self-hosted runner para o deploy local.
-- Configuração dos secrets do GitHub Actions.
-- Verificação da conectividade entre aplicação e MySQL.
+### 8.3. Gerenciamento de segredos
 
-Para cada desafio, descreva o erro observado, a causa confirmada e a solução aplicada. Não declare como resolvido algo que ainda não foi testado.
+O pipeline utiliza o segredo `MYSQL_ROOT_PASSWORD`, cadastrado nas configurações do repositório em:
 
-## Checklist obrigatório de entrega
+**Settings → Secrets and variables → Actions**
 
-Marque cada item somente depois de verificar:
+O segredo disponibiliza a senha necessária ao processo de deploy sem exigir que ela seja escrita diretamente no arquivo do workflow.
 
-- [ ] Projeto compactado em ZIP com estrutura organizada.
-- [ ] Dockerfile funcional, validado com build e execução.
-- [ ] `docker-compose.yml` funcional, com volumes, variáveis e redes.
-- [ ] Pipeline com build, testes e deploy em staging e produção.
-- [ ] README com instruções e evidências reais.
-- [ ] Documentação técnica PDF com evidências.
-- [ ] Deploy executado e verificado nos ambientes staging e produção.
+### 8.4. Fluxo de execução
 
-## Integrantes
+O fluxo geral de CI/CD é:
 
-- Nome(s): **preencher antes da entrega**
-- Turma: **preencher, se solicitado**
-- Disciplina: **preencher, se solicitado**
+1. O código é enviado ao repositório.
+2. O GitHub Actions inicia o workflow configurado.
+3. O runner hospedado pelo GitHub executa o build e os testes.
+4. Se o build for aprovado, o job de deploy é liberado.
+5. O self-hosted runner executa o deploy de staging com Docker Compose.
+6. O estado dos serviços é consultado para auxiliar na verificação da implantação.
+
+A execução efetiva de cada etapa deve ser demonstrada pelo histórico do workflow no GitHub Actions.
+
+**Escopo do deploy:** a configuração de workflow descrita nesta documentação contempla o deploy de staging. O deploy automatizado de produção só deve ser considerado implementado após sua inclusão no workflow e a validação de sua execução.
+
+## 9. Segurança e boas práticas
+
+* Manter credenciais fora do controle de versão.
+* Utilizar segredos do GitHub Actions para informações confidenciais.
+* Não expor o Docker daemon diretamente à internet.
+* Utilizar volumes persistentes quando os dados precisarem ser preservados.
+* Consultar os logs dos containers para diagnosticar falhas.
+* Verificar os resultados dos testes antes do deploy.
+* Manter o runner self-hosted atualizado e ativo durante as execuções.
+
+As evidências devem ser inseridas no documento final após a verificação de cada etapa. Não utilizar imagens ilustrativas como comprovação de uma execução real.
+
+## 10. Desafios técnicos e soluções
+
+Durante a configuração do ambiente, foi necessário ajustar o funcionamento do deploy automatizado e a comunicação entre o GitHub Actions e o runner local.
+
+Um dos pontos identificados foi a necessidade de configurar corretamente a variável `MYSQL_ROOT_PASSWORD`. O workflow verificava se essa variável estava disponível antes de continuar. A ausência do segredo provocava a interrupção da etapa de deploy.
+
+A solução foi cadastrar o segredo nas configurações do repositório, em **Settings → Secrets and variables → Actions**, utilizando o nome esperado pelo workflow.
+
+Outro ponto importante foi a seleção do runner. O job de deploy precisava utilizar as labels disponíveis no runner self-hosted cadastrado no repositório. A configuração das labels do workflow e do runner deve ser compatível para que o job possa ser executado.
+
+Esses ajustes demonstram a importância de configurar corretamente as variáveis de ambiente, as permissões e os requisitos do ambiente de execução em um pipeline de entrega contínua.
+
+## 11. Conclusão
+
+O projeto Cidades ESG Inteligentes reúne conceitos de desenvolvimento de APIs REST, persistência de dados, containerização e automação de processos de integração e entrega contínuas.
+
+A solução permite organizar informações relacionadas a indicadores ESG de cidades e demonstra como tecnologias utilizadas no desenvolvimento backend podem ser integradas a um fluxo de build, testes e implantação.
+
+A utilização do Docker Compose facilita a configuração do ambiente, enquanto o GitHub Actions automatiza etapas do processo de entrega. O self-hosted runner permite executar tarefas de deploy em uma máquina local, ampliando as possibilidades de integração entre o repositório e o ambiente de execução.
