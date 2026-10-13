@@ -1,87 +1,43 @@
-name: CI-CD Cidades ESG Inteligentes
+  name: CI-CD Cidades ESG
 
-on:
-  push:
-    branches: [master]
-  pull_request:
-    branches: [master]
-  workflow_dispatch:
+  on:
+    push:
+      branches: [master]
+    workflow_dispatch:
 
-permissions:
-  contents: read
+  jobs:
+    build:
+      name: Build e testes
+      runs-on: ubuntu-latest
 
-jobs:
-  build-test:
-    name: Build e testes automatizados
-    runs-on: ubuntu-latest
-    steps:
-      - name: Baixar código
-        uses: actions/checkout@v5
-      - name: Configurar Java 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-          cache: maven
-      - name: Build e testes
-        run: mvn -B clean verify
-      - name: Construir imagem Docker
-        run: docker build -t cidades-esg-inteligentes:${{ github.sha }} .
+      steps:
+        - name: Baixar código
+          uses: actions/checkout@v5
 
-  deploy-staging:
-    name: Deploy local em staging
-    needs: build-test
-    if: github.event_name != 'pull_request'
-    runs-on: [self-hosted, cidades-esg]
-    environment: staging
-    steps:
-      - name: Baixar código
-        uses: actions/checkout@v5
-      - name: Configurar ambiente e implantar staging
-        shell: bash
-        env:
-          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          set -euo pipefail
-          test -n "$MYSQL_ROOT_PASSWORD" || (echo "Configure o secret MYSQL_ROOT_PASSWORD no GitHub." && exit 1)
-          printf 'MYSQL_ROOT_PASSWORD=%s\nIMAGE_TAG=%s\n' "$MYSQL_ROOT_PASSWORD" "$IMAGE_TAG" > .env
-          docker compose --profile staging up -d --build
-          for i in $(seq 1 30); do
-            if curl --fail --silent http://localhost:8081/api/health; then
-              echo "Staging respondeu com sucesso."
-              exit 0
-            fi
-            sleep 5
-          done
-          docker compose --profile staging logs --no-color
-          exit 1
+        - name: Configurar Java 21
+          uses: actions/setup-java@v5
+          with:
+            distribution: temurin
+            java-version: '21'
+            cache: maven
 
-  deploy-production:
-    name: Deploy local em produção
-    needs: deploy-staging
-    if: github.event_name != 'pull_request'
-    runs-on: [self-hosted, cidades-esg]
-    environment: production
-    steps:
-      - name: Baixar código
-        uses: actions/checkout@v5
-      - name: Configurar ambiente e implantar produção
-        shell: bash
-        env:
-          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          set -euo pipefail
-          test -n "$MYSQL_ROOT_PASSWORD" || (echo "Configure o secret MYSQL_ROOT_PASSWORD no GitHub." && exit 1)
-          printf 'MYSQL_ROOT_PASSWORD=%s\nIMAGE_TAG=%s\n' "$MYSQL_ROOT_PASSWORD" "$IMAGE_TAG" > .env
-          docker compose --profile production up -d --build
-          for i in $(seq 1 30); do
-            if curl --fail --silent http://localhost:8082/api/health; then
-              echo "Produção respondeu com sucesso."
-              exit 0
-            fi
-            sleep 5
-          done
-          docker compose --profile production logs --no-color
-          exit 1
+        - name: Compilar e testar
+          run: mvn -B clean verify
+
+    deploy:
+      name: Deploy local
+      needs: build
+      runs-on: [self-hosted, cidades-esg]
+
+      steps:
+        - name: Baixar código
+          uses: actions/checkout@v5
+
+        - name: Iniciar aplicação
+          env:
+            MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+          run: |
+            test -n "$MYSQL_ROOT_PASSWORD"
+            printf 'MYSQL_ROOT_PASSWORD=%s\n' "$MYSQL_ROOT_PASSWORD" > .env
+            docker compose --profile staging up -d --build
+            docker compose --profile staging ps
